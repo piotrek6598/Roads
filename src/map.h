@@ -1,20 +1,17 @@
 /** @file
  * Interfejs klasy przechowującej mapę dróg krajowych
  *
- * @author Łukasz Kamiński <kamis@mimuw.edu.pl>, Marcin Peczarski <marpe@mimuw.edu.pl>
+ * @author Łukasz Kamiński <kamis@mimuw.edu.pl>, Marcin Peczarski <marpe@mimuw.edu.pl>,
+ * Piotr Jasinski <jasinskipiotr99@gmail.com>
  * @copyright Uniwersytet Warszawski
- * @date 20.03.2019
+ * @date 19.07.2020
  */
 
 #ifndef __MAP_H__
 #define __MAP_H__
 
 #include <stdbool.h>
-
-/**
- * Struktura przechowująca mapę dróg krajowych.
- */
-typedef struct Map Map;
+#include "roads_types.h"
 
 /** @brief Tworzy nową strukturę.
  * Tworzy nową, pustą strukturę niezawierającą żadnych miast, odcinków dróg ani
@@ -22,7 +19,7 @@ typedef struct Map Map;
  * @return Wskaźnik na utworzoną strukturę lub NULL, gdy nie udało się
  * zaalokować pamięci.
  */
-Map* newMap(void);
+Map *newMap(void);
 
 /** @brief Usuwa strukturę.
  * Usuwa strukturę wskazywaną przez @p map.
@@ -147,7 +144,7 @@ bool removeRoute(Map *map, unsigned routeId);
  * @param[in] routeId    – numer drogi krajowej.
  * @return Wskaźnik na napis lub NULL, gdy nie udało się zaalokować pamięci.
  */
-char const* getRouteDescription(Map *map, unsigned routeId);
+char const *getRouteDescription(Map *map, unsigned routeId);
 
 
 #endif /* __MAP_H__ */
