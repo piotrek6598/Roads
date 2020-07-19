@@ -24,4 +24,6 @@ bool markRoadAsPartOfRoute(Road *road, Route *route);
 
 void unmarkRoadAsPartOfRoute(Road *road, Route *route);
 
+City *getNextCity(City *city, Road *road);
+
 #endif //ROADS_ROAD_H

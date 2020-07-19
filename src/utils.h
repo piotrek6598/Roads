@@ -19,4 +19,6 @@ bool checkLength(unsigned length);
 
 bool checkRouteId(unsigned routeId);
 
+size_t getNumberLength(long long int num);
+
 #endif //ROADS_UTILS_H

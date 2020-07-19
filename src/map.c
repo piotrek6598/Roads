@@ -331,7 +331,8 @@ bool extendRoute(Map *map, unsigned routeId, const char *city) {
         return false;
     }
 
-    if (!extendRouteInDirection(route, selected_roads, from_last)) {
+    if (!extendRouteInDirection(route, &selected_roads, extend_city,
+                                from_last)) {
         deleteList(&selected_roads);
         return false;
     }

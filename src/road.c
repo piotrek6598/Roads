@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "road.h"
 
@@ -94,4 +95,12 @@ bool markRoadAsPartOfRoute(Road *road, Route *route) {
  */
 void unmarkRoadAsPartOfRoute(Road *road, Route *route) {
     removeList(&road->partOfRoute, (void *) route);
+}
+
+City *getNextCity(City *city, Road *road) {
+    if (strcmp(road->city1->name, city->name) == 0)
+        return road->city2;
+    if (strcmp(road->city2->name, city->name) == 0)
+        return road->city1;
+    return NULL;
 }

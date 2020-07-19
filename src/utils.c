@@ -40,3 +40,19 @@ bool checkLength(unsigned length) {
 bool checkRouteId(unsigned routeId) {
     return routeId > 0 && routeId < 1000;
 }
+
+size_t getNumberLength(long long int num) {
+    size_t len = 0;
+
+    if (num == 0)
+        return 1;
+
+    if (num < 0)
+        len++;
+
+    while (num != 0) {
+        len++;
+        num /= 10;
+    }
+    return len;
+}

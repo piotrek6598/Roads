@@ -18,8 +18,8 @@
  * @return Name of second city connected by road.
  */
 static char *getNextCityName(City *city, Road *road) {
-    return strcmp(road->city1->name, city->name) == 0 ? road->city2->name
-                                                      : road->city1->name;
+    City *next_city = getNextCity(city, road);
+    return next_city == NULL ? NULL : next_city->name;
 }
 
 /** @brief City destructor used only by avl_map module.
