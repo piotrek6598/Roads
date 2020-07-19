@@ -31,11 +31,18 @@ typedef struct Road Road;
  */
 typedef struct Route Route;
 
+typedef struct heap_node heap_node_t;
+
+typedef struct heap heap_t;
+
+typedef struct path path_t;
+
 /**
  * Structure representing map of roads.
  * Contains map of cities and list of created routes.
  */
 struct Map {
+    unsigned cities_num;
     map_t *cities;           /**< Map containing cites, keys are city names,
                                  values are pointers to cities. */
     Route *routes[1000];    /**< Array of pointers to routes. */
@@ -49,6 +56,9 @@ struct City {
     char *name;             /**< Pointer to city name. */
     map_t *connected_roads; /**< Map of outgoing roads from city.
                                 Keys are city name, values pointers to roads. */
+
+    unsigned num_in_heap;
+    City *prev_city;
 };
 
 /**
@@ -78,6 +88,24 @@ struct Route {
     City *firstCity;        /**< Pointer to first city. */
     City *lastCity;         /**< Pointer to last city. */
     list_t *roads;          /**< List of pointers to roads making this route. */
+};
+
+struct heap_node {
+    City *city;
+    unsigned total_len;
+    int year;
+};
+
+struct heap {
+    size_t size;
+
+    heap_node_t *heap_tab;
+};
+
+struct path {
+    list_t *roads;
+    unsigned total_len;
+    int year;
 };
 
 #endif //ROADS_ROADS_TYPES_H

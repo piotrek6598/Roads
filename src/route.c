@@ -73,7 +73,7 @@ bool replaceRoad(Route *route, Road *road, list_t **roads) {
                 route->roads = *roads;
             }
             tmp_node = *roads;
-            while (tmp_node->next != NULL)
+            while (tmp_node->next != NULL && tmp_node->next->value != NULL)
                 tmp_node = tmp_node->next;
             tmp_node->next = tmp_node2;
             return true;
@@ -97,14 +97,14 @@ bool extendRouteInDirection(Route *route, list_t **roads, City *new_city,
 
     if (from_last) {
         tmp_node = route->roads;
-        while (tmp_node->next != NULL)
+        while (tmp_node->next != NULL && tmp_node->next->value != NULL)
             tmp_node = tmp_node->next;
         tmp_node->next = *roads;
         route->lastCity = new_city;
         return true;
     } else {
         tmp_node = *roads;
-        while (tmp_node->next != NULL)
+        while (tmp_node->next != NULL && tmp_node->next->value != NULL)
             tmp_node = tmp_node->next;
         tmp_node->next = route->roads;
         route->roads = *roads;

@@ -56,3 +56,14 @@ size_t getNumberLength(long long int num) {
     }
     return len;
 }
+
+int powerOf2GreaterOrEqual(int num) {
+    int result = 1;
+
+    if (num <= 0)
+        return 0;
+
+    while (result < num)
+        result *= 2;
+    return result;
+}

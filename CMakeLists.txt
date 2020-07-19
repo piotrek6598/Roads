@@ -28,7 +28,7 @@ set(ROADS_ENGINE_SOURCE_FILES
         src/avl_map.h
         src/list.c
         src/list.h
-        src/map.h src/map.c src/city.c src/city.h src/road.c src/road.h src/route.c src/route.h src/roads_types.h src/utils.c src/utils.h)
+        src/map.h src/map.c src/city.c src/city.h src/road.c src/road.h src/route.c src/route.h src/roads_types.h src/utils.c src/utils.h src/heap.c src/heap.h src/path.c src/path.h)
 
 # Wskazujemy plik wykonywalny.
 add_executable(Map ${ROADS_ENGINE_SOURCE_FILES})

@@ -12,6 +12,7 @@
 
 #include "map.h"
 #include "city.h"
+#include "path.h"
 #include "road.h"
 #include "route.h"
 #include "utils.h"
@@ -54,6 +55,7 @@ Map *newMap(void) {
     for (unsigned i = 0; i < 1000; i++)
         new_map->routes[i] = NULL;
 
+    new_map->cities_num = 0;
     return new_map;
 }
 
@@ -109,18 +111,23 @@ bool addRoad(Map *map, const char *city1, const char *city2,
             cities_name[i] = malloc(
                     sizeof(char) * (strlen(i == 0 ? city1 : city2) + 1));
             if (cities_name[i] == NULL) {
-                if (i == 1 && created_cities[0])
+                if (i == 1 && created_cities[0]) {
+                    map->cities_num--;
                     deleteCity(cities[0]);
+                }
                 return false;
             }
             strcpy(cities_name[i], i == 0 ? city1 : city2);
             cities[i] = createCity(cities_name[i]);
             if (cities[i] == NULL) {
                 free(cities_name[i]);
-                if (i == 1 && created_cities[0])
+                if (i == 1 && created_cities[0]) {
+                    map->cities_num--;
                     deleteCity(cities[0]);
+                }
                 return false;
             }
+            map->cities_num++;
             created_cities[i] = true;
         }
     }
@@ -138,8 +145,10 @@ bool addRoad(Map *map, const char *city1, const char *city2,
 
     if (road == NULL) {
         for (int i = 0; i < 2; i++) {
-            if (created_cities[i])
+            if (created_cities[i]) {
+                map->cities_num--;
                 deleteCity(cities[i]);
+            }
         }
         return false;
     }
@@ -155,8 +164,10 @@ bool addRoad(Map *map, const char *city1, const char *city2,
             }
             deleteRoad(road);
             for (int j = 0; j < 2; j++) {
-                if (created_cities[j])
+                if (created_cities[j]) {
+                    map->cities_num--;
                     deleteCity(cities[j]);
+                }
             }
             return false;
         }
@@ -169,8 +180,10 @@ bool addRoad(Map *map, const char *city1, const char *city2,
             if (i == 1 && created_cities[0])
                 mapRemove(map->cities, (void *) cities[0]->name, 0);
             for (int j = 0; j < 2; j++) {
-                if (created_cities[j])
+                if (created_cities[j]) {
+                    map->cities_num--;
                     deleteCity(cities[j]);
+                }
             }
             return false;
         }
@@ -234,10 +247,10 @@ repairRoad(Map *map, const char *city1, const char *city2, int repairYear) {
  */
 bool newRoute(Map *map, unsigned routeId,
               const char *city1, const char *city2) {
-    // todo
     City *cities[2];
     Route *route;
     list_t *roads;
+    path_t *path;
 
     if (!checkCityName(city1) || !checkCityName(city2) ||
         !checkRouteId(routeId) || map == NULL) {
@@ -260,10 +273,17 @@ bool newRoute(Map *map, unsigned routeId,
     assert(cities[0] != NULL);
     assert(cities[1] != NULL);
 
-    // TODO roads = find path(...);
-
-    if (roads == NULL)
+    path = findBestPath(map, cities[0], cities[1]);
+    if (path == NULL)
         return false;
+
+    if (checkIfPathDefinedUnambiguously(map, path, cities[0], cities[1])) {
+        roads = path->roads;
+        free(path);
+    } else {
+        free(path);
+        return false;
+    }
 
     route = createRoute(routeId, cities[0], cities[1], roads);
     if (route == NULL) {
@@ -292,12 +312,11 @@ bool newRoute(Map *map, unsigned routeId,
  * unambiguously, allocation error occurred.
  */
 bool extendRoute(Map *map, unsigned routeId, const char *city) {
-    // todo
     City *extend_city;
     City *cities[2];
     Route *route;
-    list_t *roads[2];
-    list_t *selected_roads;
+    list_t *selected_roads = NULL;
+    path_t *paths[2];
     bool from_last;
 
     if (!checkRouteId(routeId) || !checkCityName(city) || map == NULL)
@@ -314,17 +333,43 @@ bool extendRoute(Map *map, unsigned routeId, const char *city) {
     cities[0] = route->firstCity;
     cities[1] = route->lastCity;
 
-    // TODO roads[0] = find path(...);
-    // TODO roads[1] = find path(...);
-    // TODO from_last = choose_better_path(...);
+    paths[0] = findBestPath(map, extend_city, cities[0]);
+    paths[1] = findBestPath(map, cities[1], extend_city);
 
-    if (from_last) {
-        selected_roads = roads[1];
-        deleteList(&roads[0]);
+    if (paths[0] == NULL) {
+        if (paths[1] != NULL &&
+            checkIfPathDefinedUnambiguously(map, paths[1], cities[1],
+                                            extend_city)) {
+            selected_roads = paths[1]->roads;
+            from_last = true;
+        }
     } else {
-        selected_roads = roads[0];
-        deleteList(&roads[1]);
+        if (paths[1] == NULL) {
+            if (checkIfPathDefinedUnambiguously(map, paths[0], extend_city,
+                                                 cities[0])) {
+                selected_roads = paths[0]->roads;
+                from_last = false;
+            }
+        } else {
+            if (checkIfFirstPathBetter(paths[0], paths[1])) {
+                if (checkIfPathDefinedUnambiguously(map, paths[0], extend_city,
+                                                     cities[0])) {
+                    selected_roads = paths[0]->roads;
+                    from_last = false;
+                }
+            } else if (checkIfFirstPathBetter(paths[1], paths[0])) {
+                if (checkIfPathDefinedUnambiguously(map, paths[1], cities[1],
+                                                     extend_city)) {
+                    selected_roads = paths[1]->roads;
+                    from_last = true;
+                }
+            }
+        }
     }
+    free(paths[0]);
+    free(paths[1]);
+    if (selected_roads == NULL)
+        return false;
 
     if (!markAllRoadsFromList(&selected_roads, route)) {
         deleteList(&selected_roads);

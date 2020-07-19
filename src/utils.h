@@ -21,4 +21,6 @@ bool checkRouteId(unsigned routeId);
 
 size_t getNumberLength(long long int num);
 
+int powerOf2GreaterOrEqual(int num);
+
 #endif //ROADS_UTILS_H
