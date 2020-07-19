@@ -7,16 +7,34 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "map.h"
+#include "city.h"
+#include "utils.h"
 
 /** @brief Creates new structure.
  * Creates new empty structure doesn't containing any cities, roads and routes.
  * @return Pointer to new structure or NULL if allocation error occurred.
  */
 Map *newMap(void) {
-    // todo
-    return NULL;
+    Map *new_map = (Map *) malloc(sizeof(Map));
+
+    if (new_map == NULL)
+        return NULL;
+
+    new_map->cities = mapInit(cityNameCmp, cityNameEq, printCityName,
+                              free, deleteCityFromAvlMap);
+    if (new_map->cities == NULL) {
+        free(new_map);
+        return NULL;
+    }
+
+    for (unsigned i = 0; i < 1000; i++)
+        new_map->routes[i] = NULL;
+
+    return new_map;
 }
 
 /** @brief Deletes structure.

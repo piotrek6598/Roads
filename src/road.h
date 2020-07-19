@@ -10,6 +10,8 @@
 
 #include "roads_types.h"
 
+void deleteRoadFromAvlMap(void *road);
+
 Road *createRoad(City *city1, City *city2, unsigned length, int builtYear);
 
 void deleteRoad(Road *road);

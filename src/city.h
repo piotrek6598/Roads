@@ -10,7 +10,9 @@
 
 #include "roads_types.h"
 
-City *createCity(const char *name);
+void deleteCityFromAvlMap(void *city);
+
+City *createCity(char *name);
 
 void deleteCity(City *city);
 

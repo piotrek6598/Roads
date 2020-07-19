@@ -36,9 +36,9 @@ typedef struct Route Route;
  * Contains map of cities and list of created routes.
  */
 struct Map {
-    map_t cities;           /**< Map containing cites, keys are city names,
+    map_t *cities;           /**< Map containing cites, keys are city names,
                                  values are pointers to cities. */
-    Route **routes;         /**< Array of pointers to routes. */
+    Route *routes[1000];    /**< Array of pointers to routes. */
 };
 
 /**
@@ -46,15 +46,16 @@ struct Map {
  * Contains city name and list of outgoing roads.
  */
 struct City {
-    const char *name;       /**< Pointer to city name. */
-    map_t connected_roads; /**< Map of outgoing roads from city.
+    char *name;             /**< Pointer to city name. */
+    map_t *connected_roads; /**< Map of outgoing roads from city.
                                 Keys are city name, values pointers to roads. */
 };
 
 /**
  * Structure representing road.
  * Contains pointers to city which road connects, length in km, built year
- * or year of last repair and counter how many of connected cities still exist.
+ * or year of last repair, list of routes which contain this road and
+ * counter how many of connected cities still exist.
  * Counter is used only during deleting map of roads.
  */
 struct Road {
@@ -62,6 +63,7 @@ struct Road {
     City *city2;            /**< Pointer to last city. */
     unsigned length;        /**< Length of road. */
     int year;               /**< Built year or year of last repair. */
+    list_t *partOfRoute;    /**< List of pointers to routes containing road. */
 
     int citiesCounter;      /**< Counts how many of connected cities exist. */
 };
@@ -75,7 +77,7 @@ struct Route {
     unsigned routeId;       /**< Route number. */
     City *firstCity;        /**< Pointer to first city. */
     City *lastCity;         /**< Pointer to last city. */
-    list_t roads;           /**< List of pointers to roads making this route. */
+    list_t *roads;          /**< List of pointers to roads making this route. */
 };
 
 #endif //ROADS_ROADS_TYPES_H
