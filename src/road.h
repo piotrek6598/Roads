@@ -18,7 +18,7 @@ void deleteRoad(Road *road);
 
 void safeDeleteRoad(Road *road);
 
-bool repairRoad(Road *road, int repairYear);
+bool repairSelectedRoad(Road *road, int repairYear);
 
 bool markRoadAsPartOfRoute(Road *road, Route *route);
 

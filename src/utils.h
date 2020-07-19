@@ -11,4 +11,12 @@ bool cityNameEq(void *name1, void *name2);
 
 void printCityName();
 
+bool checkCityName(const char *name);
+
+bool checkYear(int year);
+
+bool checkLength(unsigned length);
+
+bool checkRouteId(unsigned routeId);
+
 #endif //ROADS_UTILS_H

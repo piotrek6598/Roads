@@ -10,16 +10,16 @@
 
 #include "roads_types.h"
 
-Route *createRoute(unsigned routeId, City *city1, City *city2, list_t roads);
+Route *createRoute(unsigned routeId, City *city1, City *city2, list_t *roads);
 
 void deleteRoute(Route *route);
 
-bool replaceRoad(Route *route, Road *road, list_t roads);
+bool replaceRoad(Route *route, Road *road, list_t *roads);
 
-bool extendRouteInDirection(Route *route, list_t roads, bool from_last);
+bool extendRouteInDirection(Route *route, list_t *roads, bool from_last);
 
 void fillRouteDescription(Route *route, char *buffer);
 
-size_t getRouteDescriptionSize(Route *route);
+size_t getRouteDescriptionLength(Route *route);
 
 #endif //ROADS_ROUTE_H

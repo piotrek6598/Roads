@@ -12,7 +12,27 @@
 
 #include "map.h"
 #include "city.h"
+#include "road.h"
+#include "route.h"
 #include "utils.h"
+
+static bool markAllRoadsFromList(list_t **roads, Route *route) {
+    int i = 0;
+    list_t *tmpNode = *roads;
+    while (tmpNode != NULL) {
+        if (!markRoadAsPartOfRoute((Road *) tmpNode->value, route)) {
+            tmpNode = *roads;
+            for (int j = 0; j < i; j++) {
+                unmarkRoadAsPartOfRoute((Road *) tmpNode->value, route);
+                tmpNode = tmpNode->next;
+            }
+            return false;
+        }
+        i++;
+        tmpNode = tmpNode->next;
+    }
+    return true;
+}
 
 /** @brief Creates new structure.
  * Creates new empty structure doesn't containing any cities, roads and routes.
@@ -43,7 +63,16 @@ Map *newMap(void) {
  * @param map[in]         – pointer to deleted map.
  */
 void deleteMap(Map *map) {
-    // todo
+    if (map == NULL)
+        return;
+
+    for (size_t i = 0; i < 1000; i++) {
+        if (map->routes[i] != NULL)
+            deleteRoute(map->routes[i]);
+    }
+
+    mapDelete(map->cities, 2);
+    free(map);
 }
 
 /** @brief Adds new road between two cities.
@@ -59,8 +88,95 @@ void deleteMap(Map *map) {
  */
 bool addRoad(Map *map, const char *city1, const char *city2,
              unsigned length, int builtYear) {
-    // todo
-    return false;
+    City *cities[2];
+    Road *road;
+    char *cities_name[2];
+    bool created_cities[2] = {false, false};
+
+    if (!checkCityName(city1) || !checkCityName(city2) ||
+        !checkLength(length) || !checkYear(builtYear) || map == NULL) {
+        return false;
+    }
+
+    if (strcmp(city1, city2) == 0)
+        return false;
+
+    cities[0] = (City *) mapGet(map->cities, (void *) city1);
+    cities[1] = (City *) mapGet(map->cities, (void *) city2);
+
+    for (int i = 0; i < 2; i++) {
+        if (cities[i] == NULL) {
+            cities_name[i] = malloc(
+                    sizeof(char) * (strlen(i == 0 ? city1 : city2) + 1));
+            if (cities_name[i] == NULL) {
+                if (i == 1 && created_cities[0])
+                    deleteCity(cities[0]);
+                return false;
+            }
+            strcpy(cities_name[i], i == 0 ? city1 : city2);
+            cities[i] = createCity(cities_name[i]);
+            if (cities[i] == NULL) {
+                free(cities_name[i]);
+                if (i == 1 && created_cities[0])
+                    deleteCity(cities[0]);
+                return false;
+            }
+            created_cities[i] = true;
+        }
+    }
+
+    assert(cities[0] != NULL);
+    assert(cities[1] != NULL);
+
+    road = mapGet(cities[0]->connected_roads, (void *) city2);
+
+    if (road != NULL) {
+        road = NULL;
+    } else {
+        road = createRoad(cities[0], cities[1], length, builtYear);
+    }
+
+    if (road == NULL) {
+        for (int i = 0; i < 2; i++) {
+            if (created_cities[i])
+                deleteCity(cities[i]);
+        }
+        return false;
+    }
+
+    assert(road != NULL);
+
+    for (int i = 0; i < 2; i++) {
+        if (!mapInsert(cities[i]->connected_roads, (void *) cities[1 - i]->name,
+                       (void *) road)) {
+            if (i == 1) {
+                mapRemove(cities[0]->connected_roads, (void *) cities[1]->name,
+                          0);
+            }
+            deleteRoad(road);
+            for (int j = 0; j < 2; j++) {
+                if (created_cities[j])
+                    deleteCity(cities[j]);
+            }
+            return false;
+        }
+    }
+
+    for (int i = 0; i < 2; i++) {
+        if (created_cities[i] &&
+            !mapInsert(map->cities, (void *) cities[i]->name,
+                       (void *) cities[i])) {
+            if (i == 1 && created_cities[0])
+                mapRemove(map->cities, (void *) cities[0]->name, 0);
+            for (int j = 0; j < 2; j++) {
+                if (created_cities[j])
+                    deleteCity(cities[j]);
+            }
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /** @brief Modifies year of last road repair.
@@ -77,8 +193,29 @@ bool addRoad(Map *map, const char *city1, const char *city2,
  */
 bool
 repairRoad(Map *map, const char *city1, const char *city2, int repairYear) {
-    // todo
-    return false;
+    City *cities[2];
+    Road *road;
+
+    if (!checkCityName(city1) || !checkCityName(city2) ||
+        !checkYear(repairYear) || map == NULL) {
+        return false;
+    }
+
+    if (strcmp(city1, city2) == 0)
+        return false;
+
+    cities[0] = (City *) mapGet(map->cities, (void *) city1);
+    cities[1] = (City *) mapGet(map->cities, (void *) city2);
+
+    if (cities[0] == NULL || cities[1] == NULL)
+        return false;
+
+    road = (Road *) mapGet(cities[0]->connected_roads,
+                           (void *) cities[1]->name);
+    if (road == NULL)
+        return false;
+
+    return repairSelectedRoad(road, repairYear);
 }
 
 /** @brief Creates route connecting specified cities.
@@ -98,7 +235,48 @@ repairRoad(Map *map, const char *city1, const char *city2, int repairYear) {
 bool newRoute(Map *map, unsigned routeId,
               const char *city1, const char *city2) {
     // todo
-    return false;
+    City *cities[2];
+    Route *route;
+    list_t *roads;
+
+    if (!checkCityName(city1) || !checkCityName(city2) ||
+        !checkRouteId(routeId) || map == NULL) {
+        return false;
+    }
+
+    if (strcmp(city1, city2) == 0)
+        return false;
+    if (map->routes[routeId] != NULL)
+        return false;
+
+    cities[0] = (City *) mapGet(map->cities, (void *) city1);
+    cities[1] = (City *) mapGet(map->cities, (void *) city2);
+
+    for (int i = 0; i < 2; i++) {
+        if (cities[i] == NULL)
+            return false;
+    }
+
+    assert(cities[0] != NULL);
+    assert(cities[1] != NULL);
+
+    // TODO roads = find path(...);
+
+    if (roads == NULL)
+        return false;
+
+    route = createRoute(routeId, cities[0], cities[1], roads);
+    if (route == NULL) {
+        deleteList(&roads);
+        return false;
+    }
+
+    if (!markAllRoadsFromList(&roads, route)) {
+        deleteRoute(route);
+        return false;
+    }
+    map->routes[routeId] = route;
+    return true;
 }
 
 /** @brief Extends route to specified city.
@@ -115,7 +293,49 @@ bool newRoute(Map *map, unsigned routeId,
  */
 bool extendRoute(Map *map, unsigned routeId, const char *city) {
     // todo
-    return false;
+    City *extend_city;
+    City *cities[2];
+    Route *route;
+    list_t *roads[2];
+    list_t *selected_roads;
+    bool from_last;
+
+    if (!checkRouteId(routeId) || !checkCityName(city) || map == NULL)
+        return false;
+
+    route = map->routes[routeId];
+    if (route == NULL)
+        return false;
+
+    extend_city = (City *) mapGet(map->cities, (void *) city);
+    if (extend_city == NULL)
+        return false;
+
+    cities[0] = route->firstCity;
+    cities[1] = route->lastCity;
+
+    // TODO roads[0] = find path(...);
+    // TODO roads[1] = find path(...);
+    // TODO from_last = choose_better_path(...);
+
+    if (from_last) {
+        selected_roads = roads[1];
+        deleteList(&roads[0]);
+    } else {
+        selected_roads = roads[0];
+        deleteList(&roads[1]);
+    }
+
+    if (!markAllRoadsFromList(&selected_roads, route)) {
+        deleteList(&selected_roads);
+        return false;
+    }
+
+    if (!extendRouteInDirection(route, selected_roads, from_last)) {
+        deleteList(&selected_roads);
+        return false;
+    }
+    return true;
 }
 
 /** @brief Removes road between two cities.
@@ -133,6 +353,9 @@ bool extendRoute(Map *map, unsigned routeId, const char *city) {
  */
 bool removeRoad(Map *map, const char *city1, const char *city2) {
     // todo
+
+    if (strcmp(city1, city2) == 0)
+        return false;
     return false;
 }
 
@@ -145,8 +368,18 @@ bool removeRoad(Map *map, const char *city1, const char *city2) {
  * any parameter is invalid, route doesn't exist.
  */
 bool removeRoute(Map *map, unsigned routeId) {
-    // todo
-    return false;
+    Route *route;
+
+    if (!checkRouteId(routeId) || map == NULL)
+        return false;
+
+    route = map->routes[routeId];
+    if (route == NULL)
+        return false;
+
+    map->routes[routeId] = NULL;
+    deleteRoute(route);
+    return true;
 }
 
 /** @brief Create route description.
@@ -162,6 +395,22 @@ bool removeRoute(Map *map, unsigned routeId) {
  * @return Pointer to description or NULL if allocation error occurred.
  */
 char const *getRouteDescription(Map *map, unsigned routeId) {
-    // todo
-    return NULL;
+    Route *route;
+    char *buffer;
+    size_t desc_len;
+
+    if (!checkRouteId(routeId) || map == NULL)
+        return NULL;
+
+    route = map->routes[routeId];
+    if (route == NULL)
+        return "";
+
+    desc_len = getRouteDescriptionLength(route);
+    buffer = malloc(sizeof(char) * (desc_len + 1));
+    if (buffer == NULL)
+        return NULL;
+    fillRouteDescription(route, buffer);
+    buffer[desc_len] = '\0';
+    return buffer;
 }

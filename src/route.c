@@ -16,7 +16,7 @@
  * @param roads [in]      - list of roads which make this route.
  * @return Pointer to new route or NULL if allocation error occurred.
  */
-Route *createRoute(unsigned routeId, City *city1, City *city2, list_t roads) {
+Route *createRoute(unsigned routeId, City *city1, City *city2, list_t *roads) {
     // todo
     return NULL;
 }
@@ -37,7 +37,7 @@ void deleteRoute(Route *route) {
  * @param roads [in]      - list of substituting roads.
  * @return Value @p true if road was replaced. Otherwise value @p false.
  */
-bool replaceRoad(Route *route, Road *road, list_t roads) {
+bool replaceRoad(Route *route, Road *road, list_t *roads) {
     // todo
     return false;
 }
@@ -49,7 +49,7 @@ bool replaceRoad(Route *route, Road *road, list_t roads) {
  * @param from_last [in]  – flag indicating if route is extended from last city.
  * @return Value @p true if route was extended. Otherwise value @p false.
  */
-bool extendRouteInDirection(Route *route, list_t roads, bool from_last) {
+bool extendRouteInDirection(Route *route, list_t *roads, bool from_last) {
     // todo
     return false;
 }
@@ -72,7 +72,7 @@ void fillRouteDescription(Route *route, char *buffer) {
  * @param route [in,out]  – pointer to route.
  * @return Size of route description.
  */
-size_t getRouteDescriptionSize(Route *route) {
+size_t getRouteDescriptionLength(Route *route) {
     // todo
     return 0;
 }

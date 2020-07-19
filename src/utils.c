@@ -19,3 +19,24 @@ bool cityNameEq(void *name1, void *name2) {
 }
 
 void printCityName() {}
+
+bool checkCityName(const char *name) {
+    size_t len = strlen(name);
+    for (size_t i = 0; i < len; i++) {
+        if (name[i] == ';' || (name[i] >= 0 && name[i] <= 31))
+            return false;
+    }
+    return true;
+}
+
+bool checkYear(int year) {
+    return year != 0;
+}
+
+bool checkLength(unsigned length) {
+    return length > 0;
+}
+
+bool checkRouteId(unsigned routeId) {
+    return routeId > 0 && routeId < 1000;
+}

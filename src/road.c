@@ -69,7 +69,7 @@ void safeDeleteRoad(Road *road) {
  * @param repairYear [in] - repair year.
  * @return Value @p true if road was repaired. Otherwise value @p false.
  */
-bool repairRoad(Road *road, int repairYear) {
+bool repairSelectedRoad(Road *road, int repairYear) {
     if (repairYear > road->year) {
         road->year = repairYear;
         return true;
