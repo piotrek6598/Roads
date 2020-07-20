@@ -23,7 +23,6 @@ set(CMAKE_C_FLAGS "-std=c11 -Wall -Wextra")
 
 # Wskazujemy pliki źródłowe.
 set(ROADS_ENGINE_SOURCE_FILES
-        src/map_main.c
         src/avl_map.c
         src/avl_map.h
         src/list.c
@@ -31,7 +30,8 @@ set(ROADS_ENGINE_SOURCE_FILES
         src/map.h src/map.c src/city.c src/city.h src/road.c src/road.h src/route.c src/route.h src/roads_types.h src/utils.c src/utils.h src/heap.c src/heap.h src/path.c src/path.h)
 
 # Wskazujemy plik wykonywalny.
-add_executable(Map ${ROADS_ENGINE_SOURCE_FILES})
+add_executable(Map src/map_main.c ${ROADS_ENGINE_SOURCE_FILES})
+add_executable(MapTest src/map_tests.c ${ROADS_ENGINE_SOURCE_FILES})
 
 # Dodajemy obsługę Doxygena: sprawdzamy, czy jest zainstalowany i jeśli tak to:
 find_package(Doxygen)

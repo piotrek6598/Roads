@@ -56,6 +56,7 @@ City *createCity(char *name) {
 void deleteCity(City *city) {
     free(city->name);
     mapDelete(city->connected_roads, 2);
+    free(city);
 }
 
 /** @brief Adds road to city.

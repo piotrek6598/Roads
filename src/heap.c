@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "heap.h"
 #include "utils.h"
@@ -22,14 +23,17 @@ static void swapHeapNodes(heap_t *heap, unsigned node1, unsigned node2) {
     tmp_node = heap->heap_tab[node1];
     heap->heap_tab[node1] = heap->heap_tab[node2];
     heap->heap_tab[node2] = tmp_node;
-    heap->heap_tab[node1].city->num_in_heap = node1;
-    heap->heap_tab[node2].city->num_in_heap = node2;
+    if (heap->heap_tab[node1].city->num_in_heap != 0)
+        heap->heap_tab[node1].city->num_in_heap = node1;
+    if (heap->heap_tab[node2].city->num_in_heap != 0)
+        heap->heap_tab[node2].city->num_in_heap = node2;
 }
 
 static inline bool
 checkIfFirstNodeBetter(heap_t *heap, unsigned node1, unsigned node2) {
     long long int diff =
-            heap->heap_tab[node1].total_len - heap->heap_tab[node2].total_len;
+            (long long) heap->heap_tab[node1].total_len -
+            heap->heap_tab[node2].total_len;
     if (diff < 0)
         return true;
     if (diff > 0)
@@ -61,7 +65,7 @@ void deleteHeap(heap_t *heap) {
     free(heap);
 }
 
-heap_node_t * popHeap(heap_t *heap) {
+heap_node_t *popHeap(heap_t *heap) {
     unsigned curr_node = 1;
     unsigned poss_next_node;
 
@@ -103,24 +107,27 @@ decreaseHeapKey(heap_t *heap, unsigned node, unsigned total_len, int year) {
         return false;
     heap->heap_tab[node].total_len = total_len;
     heap->heap_tab[node].year = year;
+    //fprintf(stderr, "%d\n", node);
     while (node > 1) {
         if (!checkIfFirstNodeBetter(heap, node / 2, node)) {
             swapHeapNodes(heap, node / 2, node);
             node /= 2;
+            //fprintf(stderr, "%d ", node);
         } else {
             break;
         }
     }
+    //fprintf(stderr, "\n");
     return true;
 }
 
 void fillHeapWithCitiesFromList(heap_t *heap, list_t **cities_list) {
     list_t *tmp_node = *cities_list;
     unsigned i = 1;
-    while (tmp_node != NULL) {
+    while (tmp_node != NULL && tmp_node->value != NULL) {
         heap->heap_tab[i].city = (City *) tmp_node->value;
         heap->heap_tab[i].city->num_in_heap = i;
-        heap->heap_tab[i].year = INT_MIN;
+        heap->heap_tab[i].year = INT_MAX;
         heap->heap_tab[i].total_len = UINT_MAX;
         tmp_node = tmp_node->next;
         i++;

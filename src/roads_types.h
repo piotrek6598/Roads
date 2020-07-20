@@ -74,6 +74,7 @@ struct Road {
     unsigned length;        /**< Length of road. */
     int year;               /**< Built year or year of last repair. */
     list_t *partOfRoute;    /**< List of pointers to routes containing road. */
+    unsigned routes_num;
 
     int citiesCounter;      /**< Counts how many of connected cities exist. */
 };

@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "road.h"
 
@@ -41,6 +42,7 @@ Road *createRoad(City *city1, City *city2, unsigned length, int builtYear) {
     new_road->length = length;
     new_road->year = builtYear;
     new_road->citiesCounter = 2;
+    new_road->routes_num = 0;
     return new_road;
 }
 
@@ -71,7 +73,7 @@ void safeDeleteRoad(Road *road) {
  * @return Value @p true if road was repaired. Otherwise value @p false.
  */
 bool repairSelectedRoad(Road *road, int repairYear) {
-    if (repairYear > road->year) {
+    if (repairYear >= road->year) {
         road->year = repairYear;
         return true;
     }
@@ -85,7 +87,10 @@ bool repairSelectedRoad(Road *road, int repairYear) {
  * Otherwise value @p false.
  */
 bool markRoadAsPartOfRoute(Road *road, Route *route) {
-    return addList(&road->partOfRoute, (void *) route);
+    bool result = addList(&road->partOfRoute, (void *) route);
+    if (result)
+        road->routes_num++;
+    return result;
 }
 
 /** @brief Marks that road is not longer part of specified road.
@@ -94,7 +99,8 @@ bool markRoadAsPartOfRoute(Road *road, Route *route) {
  * @param route [in,out]  - pointer to route.
  */
 void unmarkRoadAsPartOfRoute(Road *road, Route *route) {
-    removeList(&road->partOfRoute, (void *) route);
+    if (removeList(&road->partOfRoute, (void *) route))
+        road->routes_num--;
 }
 
 City *getNextCity(City *city, Road *road) {
@@ -102,5 +108,6 @@ City *getNextCity(City *city, Road *road) {
         return road->city2;
     if (strcmp(road->city2->name, city->name) == 0)
         return road->city1;
+    fprintf(stderr, "%s %s %s\n", road->city1->name, road->city2->name, city->name);
     return NULL;
 }

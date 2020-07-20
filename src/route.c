@@ -75,6 +75,7 @@ bool replaceRoad(Route *route, Road *road, list_t **roads) {
             tmp_node = *roads;
             while (tmp_node->next != NULL && tmp_node->next->value != NULL)
                 tmp_node = tmp_node->next;
+            free(tmp_node->next);
             tmp_node->next = tmp_node2;
             return true;
         }
@@ -94,11 +95,11 @@ bool replaceRoad(Route *route, Road *road, list_t **roads) {
 bool extendRouteInDirection(Route *route, list_t **roads, City *new_city,
                             bool from_last) {
     list_t *tmp_node;
-
     if (from_last) {
         tmp_node = route->roads;
         while (tmp_node->next != NULL && tmp_node->next->value != NULL)
             tmp_node = tmp_node->next;
+        free(tmp_node->next);
         tmp_node->next = *roads;
         route->lastCity = new_city;
         return true;
@@ -106,8 +107,10 @@ bool extendRouteInDirection(Route *route, list_t **roads, City *new_city,
         tmp_node = *roads;
         while (tmp_node->next != NULL && tmp_node->next->value != NULL)
             tmp_node = tmp_node->next;
+        free(tmp_node->next);
         tmp_node->next = route->roads;
         route->roads = *roads;
+        route->firstCity = new_city;
         return true;
     }
 }
@@ -157,7 +160,7 @@ void fillRouteDescription(Route *route, char *buffer) {
         curr_city = getNextCity(curr_city, curr_road);
         tmp_node = tmp_node->next;
     }
-    assert(tmp_node == NULL);
+    assert(tmp_node == NULL || tmp_node->value == NULL);
     len = strlen(curr_city->name);
     snprintf(buffer + offset, len + 1, "%s", curr_city->name);
 }
@@ -195,7 +198,39 @@ size_t getRouteDescriptionLength(Route *route) {
         curr_city = getNextCity(curr_city, curr_road);
         tmp_node = tmp_node->next;
     }
-    assert(tmp_node == NULL);
+    assert(tmp_node == NULL || tmp_node->value == NULL);
     len += strlen(curr_city->name);
     return len;
+}
+
+bool checkIfFirstCityComesFirst(Route *route, City *city1, City *city2) {
+    City *curr_city;
+    list_t *tmp_node;
+    Road *curr_road;
+
+    curr_city = route->firstCity;
+    tmp_node = route->roads;
+    while (curr_city != route->lastCity) {
+        if (curr_city == city1)
+            return true;
+        if (curr_city == city2)
+            return false;
+
+        curr_road = (Road *) tmp_node->value;
+        curr_city = getNextCity(curr_city, curr_road);
+        tmp_node = tmp_node->next;
+    }
+    return false;
+}
+
+bool routeContains(Route *route, City *city) {
+    list_t *tmp_node = route->roads;
+    Road *curr_road;
+    while (tmp_node != NULL && tmp_node->value != NULL) {
+        curr_road = (Road *) tmp_node->value;
+        if (curr_road->city1 == city || curr_road->city2 == city)
+            return true;
+        tmp_node = tmp_node->next;
+    }
+    return false;
 }

@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "map.h"
 #include "city.h"
@@ -20,7 +21,7 @@
 static bool markAllRoadsFromList(list_t **roads, Route *route) {
     int i = 0;
     list_t *tmpNode = *roads;
-    while (tmpNode != NULL) {
+    while (tmpNode != NULL && tmpNode->value != NULL) {
         if (!markRoadAsPartOfRoute((Road *) tmpNode->value, route)) {
             tmpNode = *roads;
             for (int j = 0; j < i; j++) {
@@ -33,6 +34,14 @@ static bool markAllRoadsFromList(list_t **roads, Route *route) {
         tmpNode = tmpNode->next;
     }
     return true;
+}
+
+static void unmarkAllRoadsFromList(list_t **roads, Route *route) {
+    list_t *tmp_node = *roads;
+    while (tmp_node != NULL && tmp_node->value != NULL) {
+        unmarkRoadAsPartOfRoute((Road *) tmp_node->value, route);
+        tmp_node = tmp_node->next;
+    }
 }
 
 /** @brief Creates new structure.
@@ -156,12 +165,9 @@ bool addRoad(Map *map, const char *city1, const char *city2,
     assert(road != NULL);
 
     for (int i = 0; i < 2; i++) {
-        if (!mapInsert(cities[i]->connected_roads, (void *) cities[1 - i]->name,
-                       (void *) road)) {
-            if (i == 1) {
-                mapRemove(cities[0]->connected_roads, (void *) cities[1]->name,
-                          0);
-            }
+        if (!addRoadToCity(cities[i], road)) {
+            if (i == 1)
+                removeRoadFromCity(cities[0], road);
             deleteRoad(road);
             for (int j = 0; j < 2; j++) {
                 if (created_cities[j]) {
@@ -273,11 +279,12 @@ bool newRoute(Map *map, unsigned routeId,
     assert(cities[0] != NULL);
     assert(cities[1] != NULL);
 
-    path = findBestPath(map, cities[0], cities[1]);
+    path = findBestPath(map, cities[0], cities[1], NULL, true);
     if (path == NULL)
         return false;
 
-    if (checkIfPathDefinedUnambiguously(map, path, cities[0], cities[1])) {
+    if (checkIfPathDefinedUnambiguously(map, path, cities[0], cities[1],
+                                        NULL, true)) {
         roads = path->roads;
         free(path);
     } else {
@@ -330,44 +337,56 @@ bool extendRoute(Map *map, unsigned routeId, const char *city) {
     if (extend_city == NULL)
         return false;
 
+    if (routeContains(route, extend_city))
+        return false;
+
     cities[0] = route->firstCity;
     cities[1] = route->lastCity;
 
-    paths[0] = findBestPath(map, extend_city, cities[0]);
-    paths[1] = findBestPath(map, cities[1], extend_city);
+    paths[0] = findBestPath(map, extend_city, cities[0], &route->roads, true);
+    paths[1] = findBestPath(map, cities[1], extend_city, &route->roads, true);
 
     if (paths[0] == NULL) {
         if (paths[1] != NULL &&
             checkIfPathDefinedUnambiguously(map, paths[1], cities[1],
-                                            extend_city)) {
+                                            extend_city, &route->roads,
+                                            true)) {
             selected_roads = paths[1]->roads;
             from_last = true;
         }
     } else {
         if (paths[1] == NULL) {
             if (checkIfPathDefinedUnambiguously(map, paths[0], extend_city,
-                                                 cities[0])) {
+                                                cities[0], &route->roads,
+                                                true)) {
                 selected_roads = paths[0]->roads;
                 from_last = false;
             }
         } else {
             if (checkIfFirstPathBetter(paths[0], paths[1])) {
                 if (checkIfPathDefinedUnambiguously(map, paths[0], extend_city,
-                                                     cities[0])) {
+                                                    cities[0], &route->roads,
+                                                    true)) {
                     selected_roads = paths[0]->roads;
                     from_last = false;
                 }
             } else if (checkIfFirstPathBetter(paths[1], paths[0])) {
                 if (checkIfPathDefinedUnambiguously(map, paths[1], cities[1],
-                                                     extend_city)) {
+                                                    extend_city,
+                                                    &route->roads, true)) {
                     selected_roads = paths[1]->roads;
                     from_last = true;
                 }
             }
         }
     }
-    free(paths[0]);
-    free(paths[1]);
+    for (int i = 0; i < 2; i++) {
+        if (paths[i] != NULL) {
+            if (paths[i]->roads != selected_roads)
+                deleteList(&paths[i]->roads);
+            free(paths[i]);
+        }
+    }
     if (selected_roads == NULL)
         return false;
 
@@ -375,6 +394,16 @@ bool extendRoute(Map *map, unsigned routeId, const char *city) {
         deleteList(&selected_roads);
         return false;
     }
+
+    // TODO to jest debug
+    //fprintf(stderr,"DEBUG START\n");
+    list_t *tmp_node = selected_roads;
+    while (tmp_node->value != NULL) {
+        Road *curr_road = (Road *) tmp_node->value;
+        //fprintf(stderr, "%s %s\n", curr_road->city1->name, curr_road->city2->name);
+        tmp_node = tmp_node->next;
+    }
+    //fprintf(stderr, "DEBUG END\n");
 
     if (!extendRouteInDirection(route, &selected_roads, extend_city,
                                 from_last)) {
@@ -398,11 +427,132 @@ bool extendRoute(Map *map, unsigned routeId, const char *city) {
  * allocation error occurred.
  */
 bool removeRoad(Map *map, const char *city1, const char *city2) {
-    // todo
+    City *cities[2];
+    Road *road;
+    Route *curr_route;
+    Route **routes;
+    list_t *tmp_node;
+    path_t **paths;
+    unsigned routes_num;
+    bool city1_first;
+    bool unambiguous;
 
+    if (!checkCityName(city1) || !checkCityName(city2) || map == NULL)
+        return false;
     if (strcmp(city1, city2) == 0)
         return false;
-    return false;
+
+    cities[0] = (City *) mapGet(map->cities, (void *) city1);
+    cities[1] = (City *) mapGet(map->cities, (void *) city2);
+
+    if (cities[0] == NULL || cities[1] == NULL)
+        return false;
+
+    road = (Road *) mapGet(cities[0]->connected_roads,
+                           (void *) cities[1]->name);
+    if (road == NULL)
+        return false;
+
+    routes_num = road->routes_num;
+    paths = (path_t **) malloc(sizeof(path_t *) * routes_num);
+    if (paths == NULL)
+        return false;
+
+    routes = (Route **) malloc(sizeof(Route *) * routes_num);
+    if (routes == NULL) {
+        free(paths);
+        return false;
+    }
+
+    tmp_node = road->partOfRoute;
+    for (unsigned i = 0; i < routes_num; i++) {
+        curr_route = (Route *) tmp_node->value;
+        assert(curr_route != NULL);
+        city1_first = checkIfFirstCityComesFirst(curr_route, cities[0],
+                                                 cities[1]);
+        if (city1_first) {
+            paths[i] = findBestPath(map, cities[0], cities[1],
+                                    &curr_route->roads, false);
+        } else {
+            paths[i] = findBestPath(map, cities[1], cities[0],
+                                    &curr_route->roads, false);
+        }
+
+        if (paths[i] == NULL) {
+            for (unsigned j = i; j > 0; j--) {
+                deleteList(&paths[j - 1]->roads);
+                unmarkAllRoadsFromList(&paths[j - 1]->roads, routes[j - 1]);
+                free(paths[j - 1]);
+            }
+            free(routes);
+            free(paths);
+            return false;
+        }
+
+        if (city1_first) {
+            unambiguous = checkIfPathDefinedUnambiguously(map, paths[i],
+                                                          cities[0], cities[1],
+                                                          &curr_route->roads,
+                                                          false);
+        } else {
+            unambiguous = checkIfPathDefinedUnambiguously(map, paths[i],
+                                                          cities[1], cities[0],
+                                                          &curr_route->roads,
+                                                          false);
+
+        }
+        if (!unambiguous) {
+            for (unsigned j = i + 1; j > 0; j--) {
+                deleteList(&paths[j - 1]->roads);
+                if (j != i + 1)
+                    unmarkAllRoadsFromList(&paths[j - 1]->roads, routes[j - 1]);
+                free(paths[j - 1]);
+            }
+            free(paths);
+            free(routes);
+            return false;
+        }
+        if (!markAllRoadsFromList(&paths[i]->roads, curr_route)) {
+            for (unsigned j = i + 1; j > 0; j--) {
+                deleteList(&paths[j - 1]->roads);
+                if (j != i + 1)
+                    unmarkAllRoadsFromList(&paths[j - 1]->roads, routes[j - 1]);
+                free(paths[j - 1]);
+            }
+            free(paths);
+            free(routes);
+            return false;
+        }
+        routes[i] = curr_route;
+        tmp_node = tmp_node->next;
+    }
+
+    tmp_node = road->partOfRoute;
+    for (unsigned i = 0; i < routes_num; i++) {
+        curr_route = (Route *) tmp_node->value;/*
+        // TODO to jest debug
+        //fprintf(stderr,"DEBUG START\n");
+        tmp_node = paths[i]->roads;
+        while (tmp_node->value != NULL) {
+            Road *curr_road = (Road *) tmp_node->value;
+            //fprintf(stderr, "%s %s\n", curr_road->city1->name, curr_road->city2->name);
+            tmp_node = tmp_node->next;
+        }
+        //fprintf(stderr, "DEBUG END\n");*/
+        assert(curr_route != NULL);
+        bool ret_val = replaceRoad(curr_route, road, &paths[i]->roads);
+        assert(ret_val);
+
+        free(paths[i]);
+
+        tmp_node = tmp_node->next;
+    }
+    free(paths);
+    free(routes);
+    removeRoadFromCity(cities[0], road);
+    removeRoadFromCity(cities[1], road);
+    deleteRoad(road);
+    return true;
 }
 
 /** @brief Removes route with specified number.
@@ -449,8 +599,13 @@ char const *getRouteDescription(Map *map, unsigned routeId) {
         return NULL;
 
     route = map->routes[routeId];
-    if (route == NULL)
-        return "";
+    if (route == NULL) {
+        buffer = malloc(sizeof(char));
+        if (buffer == NULL)
+            return NULL;
+        buffer[0] = '\0';
+        return buffer;
+    }
 
     desc_len = getRouteDescriptionLength(route);
     buffer = malloc(sizeof(char) * (desc_len + 1));

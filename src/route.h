@@ -23,4 +23,8 @@ void fillRouteDescription(Route *route, char *buffer);
 
 size_t getRouteDescriptionLength(Route *route);
 
+bool checkIfFirstCityComesFirst(Route *route, City *city1, City *city2);
+
+bool routeContains(Route *route, City *city);
+
 #endif //ROADS_ROUTE_H
