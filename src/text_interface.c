@@ -134,6 +134,7 @@ static int executeAddRoad(Map **map) {
     //    return ERROR;
     //if (!checkIfSemicolonLast(args[3]))
     //    return ERROR;
+    //fprintf(stderr, "%s %s %s %s\n", args[0], args[1], args[2], args[3]);
     unsigned length = parseStringToUnsigned(args[2]);
     int year = parseStringToInt(args[3]);
     if (strtok(NULL, ";") != NULL)
@@ -190,6 +191,77 @@ static int executeGetRouteDescription(Map **map) {
     }
 }
 
+static int executeNewRoute(Map **map) {
+    char *args[3];
+    unsigned route_id;
+
+    for (int i = 0; i < 3; i++) {
+        args[i] = strtok(NULL, ";");
+        if (args[i] == NULL)
+            return ERROR;
+    }
+    if (strtok(NULL, ";") != NULL)
+        return ERROR;
+    route_id = parseStringToUnsigned(args[0]);
+    if (newRoute(*map, route_id, args[1], args[2])) {
+        return SUCCESS;
+    } else {
+        return ERROR;
+    }
+}
+
+static int executeExtendRoute(Map **map) {
+    char *args[2];
+    unsigned route_id;
+
+    for (int i = 0; i < 2; i++) {
+        args[i] = strtok(NULL, ";");
+        if (args[i] == NULL)
+            return ERROR;
+    }
+    if (strtok(NULL, ";") != NULL)
+        return ERROR;
+    route_id = parseStringToUnsigned(args[0]);
+    if (extendRoute(*map, route_id, args[1])) {
+        return SUCCESS;
+    } else {
+        return ERROR;
+    }
+}
+
+static int executeRemoveRoad(Map **map) {
+    char *args[2];
+
+    for (int i = 0; i < 2; i++) {
+        args[i] = strtok(NULL, ";");
+        if (args[i] == NULL)
+            return ERROR;
+    }
+    if (strtok(NULL, ";") != NULL)
+        return ERROR;
+    if (removeRoad(*map, args[0], args[1])) {
+        return SUCCESS;
+    } else {
+        return ERROR;
+    }
+}
+
+static int executeRemoveRoute(Map **map) {
+    char *arg = strtok(NULL, ";");
+    unsigned route_id;
+
+    if (arg == NULL)
+        return ERROR;
+    if (strtok(NULL, ";") != NULL)
+        return ERROR;
+    route_id = parseStringToUnsigned(arg);
+    if (removeRoute(*map, route_id)) {
+        return SUCCESS;
+    } else {
+        return ERROR;
+    }
+}
+
 static int parseAndExecuteTextLine(char *line, Map **map) {
     char *command;
     unsigned route_id;
@@ -211,6 +283,14 @@ static int parseAndExecuteTextLine(char *line, Map **map) {
         return executeRepairRoad(map);
     if (strcmp(command, "getRouteDescription") == 0)
         return executeGetRouteDescription(map);
+    if (strcmp(command, "newRoute") == 0)
+        return executeNewRoute(map);
+    if (strcmp(command, "extendRoute") == 0)
+        return executeExtendRoute(map);
+    if (strcmp(command, "removeRoad") == 0)
+        return executeRemoveRoad(map);
+    if (strcmp(command, "removeRoute") == 0)
+        return executeRemoveRoute(map);
     route_id = parseStringToUnsigned(command);
     if (route_id > 0 && route_id < 1000)
         return executeCreateRoute(map, route_id);

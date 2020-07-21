@@ -99,7 +99,7 @@ void deleteMap(Map *map) {
  */
 bool addRoad(Map *map, const char *city1, const char *city2,
              unsigned length, int builtYear) {
-    //printf("%s %s %u %d\n", city1, city2, length, builtYear);
+    //fprintf(stderr,"%s %s %u %d\n", city1, city2, length, builtYear);
     City *cities[2];
     Road *road;
     char *cities_name[2];
@@ -624,10 +624,17 @@ static void destroyRoadDescList(list_t *roads) {
     deleteList(&roads);
 }
 
-static void destroyRoadList(list_t *roads) {
-    while (!emptyList(&roads))
-        deleteRoad((Road *) removeHeadList(&roads));
+static void destroyRoadList(list_t *roads, list_t *old_years) {
+    while (!emptyList(&roads)) {
+        int *old_year = (int *) removeHeadList(&old_years);
+        if (old_year == NULL) {
+            deleteRoad((Road *) removeHeadList(&roads));
+        } else {
+            ((Road *) removeHeadList(&roads))->year = *old_year;
+        }
+    }
     deleteList(&roads);
+    deleteList(&old_years);
 }
 
 static void destroyCityList(list_t *cities) {
@@ -652,11 +659,13 @@ safeInsertOrModify(Map **map, list_t **cities, list_t **roads, list_t **years) {
                     if (tmp_node2->value != NULL) {
                         curr_city = (City *) tmp_node2->value;
                         mapRemove((*map)->cities, (void *) curr_city->name, 0);
+                        (*map)->cities_num--;
                     }
                     tmp_node2 = tmp_node2->next;
                 }
                 return false;
             }
+            (*map)->cities_num++;
         }
         i++;
         tmp_node = tmp_node->next;
@@ -704,6 +713,7 @@ safeInsertOrModify(Map **map, list_t **cities, list_t **roads, list_t **years) {
                     if (tmp_node3->value != NULL) {
                         City *tmp_city = (City *) tmp_node3->value;
                         mapRemove((*map)->cities, (void *) tmp_city->name, 0);
+                        (*map)->cities_num--;
                     }
                     tmp_node3 = tmp_node3->next;
                 }
@@ -786,7 +796,6 @@ bool createRoute(Map **map, unsigned int routeId, list_t *roads_list) {
         }
         if (last_city == NULL) {
             city2 = mapGet((*map)->cities, (void *) city_name2);
-            last_city = city2;
         } else {
             city2 = city1;
         }
@@ -811,10 +820,13 @@ bool createRoute(Map **map, unsigned int routeId, list_t *roads_list) {
             }
         } else {
             free(cities[1]);
-            if (!addList(&add_cities, NULL)) {
-                free(cities[0]);
-                free(road_desc);
-                goto rollback;
+            if (last_city == NULL) {
+                last_city = city2;
+                if (!addList(&add_cities, NULL)) {
+                    free(cities[0]);
+                    free(road_desc);
+                    goto rollback;
+                }
             }
         }
 
@@ -909,9 +921,8 @@ bool createRoute(Map **map, unsigned int routeId, list_t *roads_list) {
     rollback:
     destroyRoadDescList(roads_list);
     destroyCityList(add_cities);
-    destroyRoadList(add_roads);
+    destroyRoadList(add_roads, old_years);
     if (!route_created)
         deleteList(&route_roads);
-    deleteList(&old_years);
     return false;
 }

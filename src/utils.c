@@ -78,7 +78,7 @@ unsigned parseStringToUnsigned(char *text) {
         return 0;
 
     unsigned long long int ret_val = strtoull(text, NULL, 10);
-    return (errno == ERANGE || ret_val > UINT_MAX) ? 0 : (unsigned) ret_val;
+    return ret_val > UINT_MAX ? 0 : (unsigned) ret_val;
 }
 
 int parseStringToInt(char *text) {
@@ -86,8 +86,7 @@ int parseStringToInt(char *text) {
         return 0;
 
     long long int ret_val = strtoll(text, NULL, 10);
-    return (errno == ERANGE || ret_val > INT_MAX || ret_val < INT_MIN) ? 0
-                                                                       : (int) ret_val;
+    return (ret_val > INT_MAX || ret_val < INT_MIN) ? 0 : (int) ret_val;
 }
 
 bool checkIfSemicolonLast(char *text) {
