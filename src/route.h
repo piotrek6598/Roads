@@ -10,7 +10,7 @@
 
 #include "roads_types.h"
 
-Route *createRoute(unsigned routeId, City *city1, City *city2, list_t *roads);
+Route *createNewRoute(unsigned routeId, City *city1, City *city2, list_t *roads);
 
 void deleteRoute(Route *route);
 

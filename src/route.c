@@ -25,7 +25,7 @@
  * @param roads [in]      - list of roads which make this route.
  * @return Pointer to new route or NULL if allocation error occurred.
  */
-Route *createRoute(unsigned routeId, City *city1, City *city2, list_t *roads) {
+Route *createNewRoute(unsigned routeId, City *city1, City *city2, list_t *roads) {
     Route *new_route = (Route *) malloc(sizeof(Route));
 
     if (new_route == NULL)

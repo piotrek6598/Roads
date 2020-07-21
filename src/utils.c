@@ -2,10 +2,13 @@
 // Created by piotr on 19.07.2020.
 //
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <stdio.h>
 
 #include "utils.h"
 
@@ -68,4 +71,30 @@ int powerOf2GreaterOrEqual(int num) {
     while (result < num)
         result *= 2;
     return result;
+}
+
+unsigned parseStringToUnsigned(char *text) {
+    if (*text == '-' || *text == '\n' || *text == '+')
+        return 0;
+
+    unsigned long long int ret_val = strtoull(text, NULL, 10);
+    return (errno == ERANGE || ret_val > UINT_MAX) ? 0 : (unsigned) ret_val;
+}
+
+int parseStringToInt(char *text) {
+    if (*text == '\n' || *text == '+')
+        return 0;
+
+    long long int ret_val = strtoll(text, NULL, 10);
+    return (errno == ERANGE || ret_val > INT_MAX || ret_val < INT_MIN) ? 0
+                                                                       : (int) ret_val;
+}
+
+bool checkIfSemicolonLast(char *text) {
+    bool ret_val = false;
+    while (*text != '\0' && *text != '\n') {
+        ret_val = *text == ';';
+        text++;
+    }
+    return ret_val;
 }

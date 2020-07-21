@@ -23,4 +23,10 @@ size_t getNumberLength(long long int num);
 
 int powerOf2GreaterOrEqual(int num);
 
+unsigned parseStringToUnsigned(char *text);
+
+int parseStringToInt(char *text);
+
+bool checkIfSemicolonLast(char *text);
+
 #endif //ROADS_UTILS_H

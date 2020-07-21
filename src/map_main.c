@@ -229,7 +229,9 @@ int memory(void) {
     return 0;
 }
 
+#include "text_interface.h"
+
 int main() {
-    memory();
+    runMapInterface();
     return 0;
 }

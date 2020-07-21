@@ -146,5 +146,6 @@ bool removeRoute(Map *map, unsigned routeId);
  */
 char const *getRouteDescription(Map *map, unsigned routeId);
 
+bool createRoute(Map **map, unsigned routeId, list_t *roads_list);
 
 #endif /* __MAP_H__ */

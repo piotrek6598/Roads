@@ -27,10 +27,26 @@ set(ROADS_ENGINE_SOURCE_FILES
         src/avl_map.h
         src/list.c
         src/list.h
-        src/map.h src/map.c src/city.c src/city.h src/road.c src/road.h src/route.c src/route.h src/roads_types.h src/utils.c src/utils.h src/heap.c src/heap.h src/path.c src/path.h)
+        src/map.h
+        src/map.c
+        src/city.c
+        src/city.h
+        src/road.c
+        src/road.h
+        src/route.c
+        src/route.h
+        src/roads_types.h
+        src/utils.c
+        src/utils.h
+        src/heap.c
+        src/heap.h
+        src/path.c
+        src/path.h)
+set(ROADS_INTERFACE_SOURCE_FILES
+        src/map_main.c src/text_interface.c src/text_interface.h)
 
 # Wskazujemy plik wykonywalny.
-add_executable(Map src/map_main.c ${ROADS_ENGINE_SOURCE_FILES})
+add_executable(Map ${ROADS_INTERFACE_SOURCE_FILES} ${ROADS_ENGINE_SOURCE_FILES})
 add_executable(MapTest src/map_tests.c ${ROADS_ENGINE_SOURCE_FILES})
 
 # Dodajemy obsługę Doxygena: sprawdzamy, czy jest zainstalowany i jeśli tak to:

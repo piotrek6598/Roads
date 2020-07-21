@@ -54,6 +54,8 @@ City *createCity(char *name) {
  * @param city [in]     - pointer to city.
  */
 void deleteCity(City *city) {
+    if (city == NULL)
+        return;
     free(city->name);
     mapDelete(city->connected_roads, 2);
     free(city);
