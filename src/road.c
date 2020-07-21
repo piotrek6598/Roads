@@ -2,12 +2,11 @@
  * Implementation of class representing road.
  *
  * @author Piotr Jasinski <jasinskipiotr99@gmail.com>
- * @date 19.07.2020
+ * @date 21.07.2020
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "road.h"
 
@@ -103,11 +102,16 @@ void unmarkRoadAsPartOfRoute(Road *road, Route *route) {
         road->routes_num--;
 }
 
+/** @brief Finds other end of road.
+ * Returns end of road other that @p city.
+ * @param city [in,out]   - pointer to city (end of road),
+ * @param road [in,out]   - pointer to road.
+ * @return Pointer to city (other end of road) or NULL if error occurred.
+ */
 City *getNextCity(City *city, Road *road) {
     if (strcmp(road->city1->name, city->name) == 0)
         return road->city2;
     if (strcmp(road->city2->name, city->name) == 0)
         return road->city1;
-    fprintf(stderr, "%s %s %s\n", road->city1->name, road->city2->name, city->name);
     return NULL;
 }

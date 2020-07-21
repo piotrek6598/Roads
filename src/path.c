@@ -2,7 +2,7 @@
  * Implementation of module finding best path.
  *
  * @author Piotr Jasinski <jasinskipiotr99@gmail.com>
- * @date 20.07.2020
+ * @date 21.07.2020
  */
 
 #include <assert.h>
@@ -10,12 +10,18 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "heap.h"
 #include "road.h"
 #include "path.h"
 
+/** @brief Makes cities invisible for Dijkstra algorithm.
+ * Sets num_in_heap field to 0 for every city that is end of any road from list,
+ * but not @p city1 and @p city2.
+ * @param roads [in,out]     - pointer to roads list,
+ * @param city1 [in,out]     - pointer to first city,
+ * @param city2 [in,out]     - pointer to last city.
+ */
 static void
 excludeCitiesFromRoadLists(list_t **roads, City *city1, City *city2) {
     list_t *tmp_node = *roads;
@@ -30,6 +36,13 @@ excludeCitiesFromRoadLists(list_t **roads, City *city1, City *city2) {
     }
 }
 
+/** @brief Checks if first path is better.
+ * First path is better if is shorter all has equal length and oldest road
+ * is newer.
+ * @param path1 [in,out]     - pointer to first path,
+ * @param path2 [in,out]     - pointer to second path.
+ * @return Value @p true if first path is better. Otherwise value @p false.
+ */
 bool checkIfFirstPathBetter(path_t *path1, path_t *path2) {
     if (path1->total_len < path2->total_len)
         return true;
@@ -38,6 +51,23 @@ bool checkIfFirstPathBetter(path_t *path1, path_t *path2) {
     return path1->year > path2->year;
 }
 
+/** @brief Checks if path was selected unambiguously.
+ * Assumes that @p map, @p city1, @p city2, @p exclude_roads, @p direct are
+ * the same as in @ref findBestPath function which returned @p path.
+ * Works like Dijkstra algorithm, but first sets distance for cities from path
+ * and only for this city, previous city is set. Then if Dijkstra algorithm
+ * enters city with previous city set from city without previous city set and
+ * path is just so good (can't be better by definition of path), means that
+ * path is ambiguous.
+ * @param map [in,out]       - pointer to map,
+ * @param path [in,out]      - pointer to path,
+ * @param city1 [in,out]     - pointer to first city,
+ * @param city2 [in,out]     - pointer to last city,
+ * @param exclude_roads [in] - list of excluded roads and cities,
+ * @param direct [in]        - flag indicating if direct road can be used.
+ * @return Value @p true if path was selected unambiguously.
+ * Otherwise value @p false.
+ */
 bool checkIfPathDefinedUnambiguously(Map *map, path_t *path, City *city1,
                                      City *city2, list_t **exclude_roads,
                                      bool direct) {
@@ -143,9 +173,21 @@ bool checkIfPathDefinedUnambiguously(Map *map, path_t *path, City *city1,
     return true;
 }
 
+/** @brief Finds best path between two cities.
+ * Find best path from @p city1 to @p city2. All cities other than @p city1
+ * and @p city2 that are end of any road in @p exclude_roads, can't be in path.
+ * If flag @p direct is set to false, direct road from @p city1 to @p city2
+ * can't be used. Works using Dijkstra algorithm.
+ * @param map [in,out]       - pointer to map,
+ * @param city1 [in,out]     - pointer to first city,
+ * @param city2 [in,out]     - pointer to last city,
+ * @param exclude_roads [in] - list of excluded roads and cities,
+ * @param direct [in]        - flag indicating if direct road can be used.
+ * @return Pointer to path or NULL if allocation error occurred or @p city2
+ * is not reachable from @p city1.
+ */
 path_t *findBestPath(Map *map, City *city1, City *city2, list_t **exclude_roads,
                      bool direct) {
-    //fprintf(stderr, "%s %s\n", city1->name, city2->name);
     City *curr_city;
     heap_t *heap;
     heap_node_t *heap_node;
@@ -182,8 +224,6 @@ path_t *findBestPath(Map *map, City *city1, City *city2, list_t **exclude_roads,
 
     curr_city = city1;
     while (strcmp(curr_city->name, city2->name) != 0) {
-        //fprintf(stderr, "%s %u %d\n", curr_city->name, heap_node->total_len,
-        //        heap_node->year);
         if ((heap_node->total_len == UINT_MAX && heap_node->year == INT_MAX) ||
             curr_city->num_in_heap == 0) {
             deleteHeap(heap);
@@ -205,14 +245,12 @@ path_t *findBestPath(Map *map, City *city1, City *city2, list_t **exclude_roads,
             new_len = heap_node->total_len + curr_road->length;
             new_year = heap_node->year < curr_road->year ? heap_node->year
                                                          : curr_road->year;
-            //fprintf(stderr, "Road to: %s %u %d\n", next_city->name, new_len, new_year);
 
             if (!((curr_city == city1 && next_city == city2) ||
                   (curr_city == city2 && next_city == city1)) || direct) {
                 if (next_city->num_in_heap != 0) {
                     if (decreaseHeapKey(heap, next_city->num_in_heap, new_len,
                                         new_year)) {
-                        //fprintf(stderr, "key decreased\n");
                         next_city->prev_city = curr_city;
                     }
                 }
@@ -267,6 +305,5 @@ path_t *findBestPath(Map *map, City *city1, City *city2, list_t **exclude_roads,
 
         curr_city = curr_city->prev_city;
     }
-    //fprintf(stderr, "OK\n");
     return path;
 }

@@ -1,6 +1,9 @@
-//
-// Created by piotr on 19.07.2020.
-//
+/** @file
+ * Utilities used by other modules.
+ *
+ * @author Piotr Jasinski <jasinskipiotr99@gmail.com>
+ * @date 21.07.2020
+ */
 
 #ifndef ROADS_UTILS_H
 #define ROADS_UTILS_H
@@ -21,7 +24,7 @@ bool checkRouteId(unsigned routeId);
 
 size_t getNumberLength(long long int num);
 
-int powerOf2GreaterOrEqual(int num);
+int powerOf2Greater(int num);
 
 unsigned parseStringToUnsigned(char *text);
 

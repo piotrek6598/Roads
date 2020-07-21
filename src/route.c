@@ -2,7 +2,7 @@
  * Implementation of class representing route.
  *
  * @author Piotr Jasinski <jasinskipiotr99@gmail.com>
- * @date 19.07.2020
+ * @date 21.07.2020
  */
 
 #include <assert.h>
@@ -89,6 +89,7 @@ bool replaceRoad(Route *route, Road *road, list_t **roads) {
  * Updates first or last city.
  * @param route [in,out]  – pointer to route,
  * @param roads [in]      – list of extending roads,
+ * @param new_city [in]   - new end of route,
  * @param from_last [in]  – flag indicating if route is extended from last city.
  * @return Value @p true if route was extended. Otherwise value @p false.
  */
@@ -203,6 +204,13 @@ size_t getRouteDescriptionLength(Route *route) {
     return len;
 }
 
+/** @brief Checks if first city comes first in route.
+ * @param route [in,out]  - pointer to route,
+ * @param city1 [in,out]  - pointer to first city,
+ * @param city2 [in,out]  - pointer to second city.
+ * @return Value @p true if first city comes first in route.
+ * Otherwise value @p false.
+ */
 bool checkIfFirstCityComesFirst(Route *route, City *city1, City *city2) {
     City *curr_city;
     list_t *tmp_node;
@@ -223,6 +231,11 @@ bool checkIfFirstCityComesFirst(Route *route, City *city1, City *city2) {
     return false;
 }
 
+/** @brief Checks if route contains city.
+ * @param route [in,out]  - pointer to route,
+ * @param city [in,out]   - pointer to city.
+ * @return Value @p true if contains city. Otherwise value @p false.
+ */
 bool routeContains(Route *route, City *city) {
     list_t *tmp_node = route->roads;
     Road *curr_road;

@@ -1,6 +1,9 @@
-//
-// Created by piotr on 20.07.2020.
-//
+/** @file
+ * Implementation of text interface.
+ *
+ * @author Piotr Jasinski <jasinskipiotr99@gmail.com>
+ * @date 21.07.2020
+ */
 
 #include <stddef.h>
 #include <stdio.h>
@@ -11,18 +14,30 @@
 #include "map.h"
 #include "utils.h"
 
+/**
+ * Macro defining exit code in case of map module function success.
+ */
 #define SUCCESS 0
+/**
+ * Macro defining exit code in case of map module function error.
+ */
 #define ERROR 1
+/**
+ * Macro defining critical error like lack ot memory etc.
+ */
 #define CRITICAL_ERROR 2
 
-void testList(list_t **list) {
-    list_t *tmp_node = *list;
-    while (tmp_node != NULL && tmp_node->value != NULL) {
-        printf("%s\n", (char *) tmp_node->value);
-        tmp_node = tmp_node->next;
-    }
-}
-
+/** @brief Executes @ref createRoute.
+ * Converts route description in format like in @ref getRouteDescription to
+ * road descriptions acceptable by @ref createRoute.
+ * Checks if new route makes path.
+ * Assumes that routeId; was already removed from description and rest
+ * of description is available through strtok function.
+ * @param map [in,out] - double pointer to map,
+ * @param routeId [in] - route number.
+ * @return Value @ref SUCCESS, @ref ERROR depending on function result.
+ * Value @ref CRITICAL_ERROR if allocation error occurred.
+ */
 static int executeCreateRoute(Map **map, unsigned routeId) {
     char *road_params[4] = {NULL, NULL, NULL, NULL};
     char *road;
@@ -102,8 +117,6 @@ static int executeCreateRoute(Map **map, unsigned routeId) {
     }
 
     if (curr_param == 1 && str) {
-        //testList(&road_desc);
-        //return ERROR;
         mapDelete(cities_name, 0);
         if (createRoute(map, routeId, road_desc)) {
             return SUCCESS;
@@ -119,24 +132,26 @@ static int executeCreateRoute(Map **map, unsigned routeId) {
     }
 }
 
+/** @brief Executes @ref addRoad.
+ * Assumes that description city1;city2;length;year is available
+ * through strtok function.
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS or @ref ERROR depending on function result.
+ */
 static int executeAddRoad(Map **map) {
     char *args[4];
+    int year;
+    unsigned length;
 
     for (int i = 0; i < 4; i++) {
-        //if (i != 3)
         args[i] = strtok(NULL, ";");
-        //else
-        //    args[i] = strtok(NULL, "\n");
         if (args[i] == NULL)
             return ERROR;
     }
-    //if (!checkIfSemicolonLast(args[2]))
-    //    return ERROR;
-    //if (!checkIfSemicolonLast(args[3]))
-    //    return ERROR;
-    //fprintf(stderr, "%s %s %s %s\n", args[0], args[1], args[2], args[3]);
-    unsigned length = parseStringToUnsigned(args[2]);
-    int year = parseStringToInt(args[3]);
+
+    length = parseStringToUnsigned(args[2]);
+    year = parseStringToInt(args[3]);
+
     if (strtok(NULL, ";") != NULL)
         return ERROR;
     if (addRoad(*map, args[0], args[1], length, year)) {
@@ -146,22 +161,23 @@ static int executeAddRoad(Map **map) {
     }
 }
 
+/** @brief Executes @ref repairRoad.
+ * Assumes that description city1;city2;year is available through strtok function.
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS or @ref ERROR depending on function result.
+ */
 static int executeRepairRoad(Map **map) {
     char *args[3];
     int year;
 
     for (int i = 0; i < 3; i++) {
-        //if (i != 2)
         args[i] = strtok(NULL, ";");
-        //else {
-        //    args[i] = strtok(NULL, "\n");
-        //}
         if (args[i] == NULL)
             return ERROR;
     }
-    //if (!checkIfSemicolonLast(args[2]))
-    //    return ERROR;
+
     year = parseStringToInt(args[2]);
+
     if (strtok(NULL, ";") != NULL)
         return ERROR;
     if (repairRoad(*map, args[0], args[1], year)) {
@@ -171,17 +187,24 @@ static int executeRepairRoad(Map **map) {
     }
 }
 
+/** @brief Executes @ref getRouteDescription.
+ * Assumes that route number is available through strtok function.
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS or @ref ERROR depending on function result.
+ */
 static int executeGetRouteDescription(Map **map) {
     char *route_id = strtok(NULL, ";");
+    unsigned route;
+    const char *desc;
 
     if (route_id == NULL)
         return ERROR;
-    //if (!checkIfSemicolonLast(route_id))
-    //    return ERROR;
     if (strtok(NULL, ";") != NULL)
         return ERROR;
-    unsigned route = parseStringToUnsigned(route_id);
-    const char *desc = getRouteDescription(*map, route);
+
+    route = parseStringToUnsigned(route_id);
+    desc = getRouteDescription(*map, route);
+
     if (desc != NULL) {
         printf("%s\n", desc);
         free((void *) desc);
@@ -191,6 +214,12 @@ static int executeGetRouteDescription(Map **map) {
     }
 }
 
+/** @brief Executes @ref newRoute
+ * Assumes that description routeId;city1;city2 is available through
+ * strtok function.
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS or @ref ERROR depending on function result.
+ */
 static int executeNewRoute(Map **map) {
     char *args[3];
     unsigned route_id;
@@ -210,6 +239,11 @@ static int executeNewRoute(Map **map) {
     }
 }
 
+/** @brief Executes @ref extendRoute.
+ * Assumes that description routeId;city is available through strtok function.
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS or @ref ERROR depending on function result.
+ */
 static int executeExtendRoute(Map **map) {
     char *args[2];
     unsigned route_id;
@@ -221,7 +255,9 @@ static int executeExtendRoute(Map **map) {
     }
     if (strtok(NULL, ";") != NULL)
         return ERROR;
+
     route_id = parseStringToUnsigned(args[0]);
+
     if (extendRoute(*map, route_id, args[1])) {
         return SUCCESS;
     } else {
@@ -229,6 +265,11 @@ static int executeExtendRoute(Map **map) {
     }
 }
 
+/** @brief Executes @ref removeRoad.
+ * Assumes that description city1;city2 is available through strtok function.
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS or @ref ERROR depending on function result.
+ */
 static int executeRemoveRoad(Map **map) {
     char *args[2];
 
@@ -246,6 +287,11 @@ static int executeRemoveRoad(Map **map) {
     }
 }
 
+/** @brief Executes @ref removeRoute.
+ * Assumes that route number is available through strtok function.
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS or @ref ERROR depending on function result.
+ */
 static int executeRemoveRoute(Map **map) {
     char *arg = strtok(NULL, ";");
     unsigned route_id;
@@ -254,7 +300,9 @@ static int executeRemoveRoute(Map **map) {
         return ERROR;
     if (strtok(NULL, ";") != NULL)
         return ERROR;
+
     route_id = parseStringToUnsigned(arg);
+
     if (removeRoute(*map, route_id)) {
         return SUCCESS;
     } else {
@@ -262,6 +310,14 @@ static int executeRemoveRoute(Map **map) {
     }
 }
 
+/** @brief Parses text line and executes requested function.
+ * If line is empty or is a comment does nothing.
+ * @param line [in]    - pointer to text line,
+ * @param map [in,out] - double pointer to map.
+ * @return Value @ref SUCCESS if line describes correct command and function
+ * has ended with @ref SUCCESS or line is command or empty. Otherwise value
+ * @ref ERROR.
+ */
 static int parseAndExecuteTextLine(char *line, Map **map) {
     char *command;
     unsigned route_id;
@@ -297,6 +353,9 @@ static int parseAndExecuteTextLine(char *line, Map **map) {
     return ERROR;
 }
 
+/** @brief Runs text interface.
+ * @return Value @p 0.
+ */
 int runMapInterface() {
     size_t size;
     int line_counter = 0;

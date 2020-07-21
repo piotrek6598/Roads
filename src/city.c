@@ -2,11 +2,10 @@
  * Implementation of class representing city.
  *
  * @author Piotr Jasinski <jasinskipiotr99@gmail.com>
- * @date 19.07.2020
+ * @date 21.07.2020
  */
 
 #include <stdlib.h>
-#include <string.h>
 
 #include "city.h"
 #include "utils.h"
