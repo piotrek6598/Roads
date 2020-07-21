@@ -1,39 +1,18 @@
 /**
-@mainpage Dokumentacja zadania gamma
+@mainpage Roads documentation.
 
-### Treść zadania
+### Program description
 
-Uwaga: aktualna treść zadania znajduje się w [Moodle'u](https://moodle.mimuw.edu.pl).
+Program simulates map of roads. Map consists of cities, roads and national routes.
+Roads can be added, removed and repair. National routes between to cities should be
+as short as possible. Ones defined national route can be extended, completely removed
+and changed only if road is removed. Road won't be removed if it breaks any national route
+and diversion is impossible.
 
-### Opis programu
-
-Program udostępnia przeprowadzenie rozgrywki w trybie wsadowym albo interaktywnym.
-```
-B width height players areas -> wybór trybu wsadowego oraz utworzenie gry z parametrami (width, height, players, areas)
-I width height players areas -> wybór trybu interaktywnego oraz utworzenie gry z parametrami (width, height, players, areas)
-```
-Tryb wsadowy akceptuje następujące polecenia:
-```
-m player x y -> postawienie pionka wskazanego gracza na wskazanym polu,
-g player x y -> wykonanie złotego ruchu przez wskazanego gracza na wskazanym polu,
-b player     -> wypisanie liczby zajętych pół przez wskazanego gracza,
-f player     -> wypisanie liczby pól na których wskazany gracz może postawić teraz pionek,
-q player     -> sprawdzenie czy wskazany gracz może wykonać złoty ruch,
-p            -> wypisanie aktualnej planszy
-```
-Polecenia m i g wypisują 1 jeśli ruch został wykonany, 0 w przeciwnym wypadku.
-Polecenie q wypisuje 1 jeśli gracz może wykonać złoty ruch, 0 w przeciwnym przypadku.
-
-W trybie interaktywnym gracz: <br>
--> może wykonać ruch wciskając klawisz spacja,<br>
--> mozę wykonać złoty ruch wciskając klawisz g,<br>
--> zrezygnować z ruchu wciskając klawisz c,<br>
--> wybrać pole przed wykonanie ruchu przy użyciu klawiszy strzałek.<br>
-W trybie interaktywnym próba wykonania nielegalnego ruchu skutkuje wypisaniem ostrzeżenia oraz dalszym oczekiwanie na legalny ruchu.<br>
-Gra kończy się gdy wszystkie pola będą zajęte lub zostanie wciśnięta kombinacja klawiszy Ctrl + D.<br>
-Po zakończeniu gry wypisywane jest podsumowanie rozgrywki.
+Cities, roads and routes are stored in lists and maps based on avl tree structure. So can
+be sorted out e.g. by name.
 
 @author Piotr Jasinski <jasinskipiotr99@gmail.com>
-@date 08.06.2020
+@date 21.07.2020
 
 */
